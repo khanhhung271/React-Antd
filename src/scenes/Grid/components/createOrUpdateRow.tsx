@@ -27,6 +27,13 @@ class CreateOrUpdateRow extends React.Component<ICreateOrUpdateRowProps, ICreate
       let formFields = [...this.state.formFields];
       formFields[e.target.dataset.id]["value"] = e.target.value;
       this.setState({ formFields }, () => console.log(this.state.formFields));
+      const { formRef } = this.props;
+      const row = {
+        cells: formFields,
+        id: 0
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      formRef.current?.setFieldsValue(row);
     }
   };
 
@@ -38,22 +45,22 @@ class CreateOrUpdateRow extends React.Component<ICreateOrUpdateRowProps, ICreate
   }
   
   componentDidUpdate() {
-    setTimeout(() => {
-      const { formRef } = this.props;
-      this.createFormField(formRef);
+    setTimeout(() => {      
+      const { formFields } = this.state;
+      const { formRef: { current } } = this.props;
+      const { cells } = current?.getFieldsValue(true) as MyRow;
+      if(cells?.length && !utils.compareTwoArray(cells, formFields)) {        
+        this.createFormField(current);
+      }
     }, 150);
   }
 
-  createFormField = (formRef: { current: any; }): void => {
-    const { current } = formRef;
-    if(current) {
-      const { cells } = current.getFieldsValue(true) as MyRow;
-      const { formFields } = this.state;
-      if(cells?.length && !utils.compareTwoArray(cells, formFields)) {
-        this.setState({
-          formFields: cells || []
-        });
-      }
+  createFormField = (current: any): void => {
+    const { cells } = current.getFieldsValue(true) as MyRow;
+    if(current) {      
+      this.setState({
+        formFields: cells || []
+      });
     }
   }
 

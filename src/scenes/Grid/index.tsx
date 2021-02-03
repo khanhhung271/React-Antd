@@ -9,6 +9,7 @@ import CreateOrUpdateRow from './components/createOrUpdateRow';
 import Stores from '../../stores/storeIdentifier';
 import GridStore from '../../stores/gridStore';
 import { Row as MyRow } from '../../models/Grid/row';
+import utils from '../../utils/utils';
 
 export interface IGridProps {
   gridStore: GridStore;
@@ -61,10 +62,12 @@ class Grid extends React.Component<IGridProps, IGridState> {
     const { gridStore } = this.props;
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     form?.validateFields().then(async (values: MyRow) => {
+      const row = form.getFieldsValue(true) as MyRow;
       if (rowId === 0) {
-        gridStore.createRow(values);
+        row.id = gridStore.grid.rows.length;
+        gridStore.createRow(row);
       } else {
-        gridStore.updateRow({ ...values, id: rowId });
+        gridStore.updateRow({ cells: row.cells, id: rowId });
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.setState({ modalVisible: false });
@@ -112,11 +115,12 @@ class Grid extends React.Component<IGridProps, IGridState> {
     if(grid.rows.length) {
       const { cells } = grid.rows[0];
       const [,...gridItems] = grid.rows;
+      const dataSource = utils.convertTwoToOneDimensionArray(gridItems);
       let columns: any[] = [];
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      cells?.forEach((e) => {
+      cells?.forEach((c, i) => {
         columns = [...columns, {
-            title: (`${e.value}`), dataIndex: `${e.value}`, key: `${e.value}`, render: (text: string) => <div>{text}</div>
+            title: (`${c.label}`), dataIndex: (`column${i}`), key: (`column${i}`), render: (text: string) => <div>{text}</div>
           }
         ];
       });
@@ -178,11 +182,11 @@ class Grid extends React.Component<IGridProps, IGridState> {
               xxl={{ span: 24, offset: 0 }}
             >
               <Table
-                rowKey={(record) => record.id.toString()}
+                rowKey={(record) => record.rowId.toString()}
                 bordered
                 columns={columns}
                 loading={grid === undefined}
-                dataSource={grid === undefined ? [] : gridItems}
+                dataSource={grid === undefined ? [] : dataSource}
               />
             </Col>
           </Row>
